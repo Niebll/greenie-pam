@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.greeniepam.ui.DetailPostScreen
 import com.example.greeniepam.ui.DetailScreen
 import com.example.greeniepam.ui.MainScreen
 
@@ -21,6 +22,9 @@ fun AppNavGraph(
             MainScreen(
                 onNavigateToDetail = { id ->
                     navController.navigate(Screen.Detail(id))
+                },
+                onNavigateToDetailPost = { postId ->
+                    navController.navigate(Screen.DetailPost(postId))
                 }
             )
         }
@@ -28,6 +32,13 @@ fun AppNavGraph(
             val detail: Screen.Detail = backStackEntry.toRoute()
             DetailScreen(
                 itemId = detail.id,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable<Screen.DetailPost> { backStackEntry ->
+            val detailPost: Screen.DetailPost = backStackEntry.toRoute()
+            DetailPostScreen(
+                postId = detailPost.postId,
                 onBack = { navController.popBackStack() }
             )
         }

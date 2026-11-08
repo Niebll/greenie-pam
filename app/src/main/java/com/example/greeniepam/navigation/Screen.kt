@@ -8,4 +8,7 @@ sealed interface Screen {
 
     @Serializable
     data class Detail(val id: String) : Screen
+
+    @Serializable
+    data class DetailPost(val postId: String) : Screen
 }

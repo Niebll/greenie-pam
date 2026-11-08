@@ -1,6 +1,5 @@
 package com.example.greeniepam.ui
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,19 +14,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.data.JournalRepository
 
 @Composable
 fun MainScreen(
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToDetailPost: (String) -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
-    val context = LocalContext.current
+    var showBuatJurnal by remember { mutableStateOf(false) }
+    val journalEntries = JournalRepository.journals
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -41,10 +42,14 @@ fun MainScreen(
                 contentAlignment = Alignment.BottomCenter
             ) {
                 GreenieNavbar(
-                    selected = selectedTab,
-                    onItemClick = { selectedTab = it },
+                    selected = if (showBuatJurnal) null else selectedTab,
+                    isJournalActive = showBuatJurnal,
+                    onItemClick = {
+                        showBuatJurnal = false
+                        selectedTab = it
+                    },
                     onJournalClick = {
-                        Toast.makeText(context, "Tombol Tulis Jurnal diklik", Toast.LENGTH_SHORT).show()
+                        showBuatJurnal = true
                     }
                 )
             }
@@ -56,11 +61,29 @@ fun MainScreen(
                 .greenieCanvas()
                 .padding(innerPadding)
         ) {
-            when (selectedTab) {
-                NavbarItem.Beranda -> HomeScreen(onNavigateToDetail = onNavigateToDetail)
-                NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
-                NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
-                NavbarItem.Koleksi -> PlaceholderScreen(title = "Halaman Koleksi")
+            if (showBuatJurnal) {
+                BuatJurnalScreen(
+                    onSaveSuccess = { newJournal ->
+                        JournalRepository.addJournal(newJournal)
+                        showBuatJurnal = false
+                        selectedTab = NavbarItem.Koleksi
+                    }
+                )
+            } else {
+                when (selectedTab) {
+                    NavbarItem.Beranda -> HomeScreen(
+                        journalList = journalEntries,
+                        onNavigateToDetail = onNavigateToDetail,
+                        onNavigateToDetailPost = onNavigateToDetailPost
+                    )
+                    NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
+                    NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
+                    NavbarItem.Koleksi -> KoleksiScreen(
+                        journalList = journalEntries,
+                        onNavigateToDetail = onNavigateToDetail,
+                        onNavigateToDetailPost = onNavigateToDetailPost
+                    )
+                }
             }
         }
     }

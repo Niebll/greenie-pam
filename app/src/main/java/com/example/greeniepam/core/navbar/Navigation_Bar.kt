@@ -65,16 +65,18 @@ enum class NavbarItem(
 }
 
 /**
- * @param selected menu yang lagi aktif
+ * @param selected menu yang lagi aktif (null jika sedang di mode Tulis Jurnal)
  * @param onItemClick dipanggil waktu salah satu dari 4 menu diklik
  * @param onJournalClick dipanggil waktu tombol Jurnal (tengah) diklik
+ * @param isJournalActive true jika mode Tulis Jurnal sedang aktif (tombol tengah jadi warna emas/orange)
  */
 @Composable
 fun GreenieNavbar(
-    selected: NavbarItem,
+    selected: NavbarItem?,
     onItemClick: (NavbarItem) -> Unit,
     onJournalClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isJournalActive: Boolean = false,
 ) {
     val colors = GreenieTheme.colors
     val radius = GreenieTheme.radius
@@ -94,7 +96,7 @@ fun GreenieNavbar(
     ) {
         NavbarTab(NavbarItem.Beranda, selected, onItemClick)
         NavbarTab(NavbarItem.Pustaka, selected, onItemClick)
-        JournalButton(onClick = onJournalClick)
+        JournalButton(onClick = onJournalClick, isActive = isJournalActive)
         NavbarTab(NavbarItem.Jadwal, selected, onItemClick)
         NavbarTab(NavbarItem.Koleksi, selected, onItemClick)
     }
@@ -103,11 +105,11 @@ fun GreenieNavbar(
 @Composable
 private fun RowScope.NavbarTab(
     item: NavbarItem,
-    selected: NavbarItem,
+    selected: NavbarItem?,
     onClick: (NavbarItem) -> Unit,
 ) {
     val colors = GreenieTheme.colors
-    val isSelected = item == selected
+    val isSelected = selected != null && item == selected
     val contentColor = if (isSelected) colors.text.accent else colors.text.secondary
     val tabShape = RoundedCornerShape(GreenieTheme.radius.radius24)
 
@@ -140,22 +142,28 @@ private fun RowScope.NavbarTab(
     }
 }
 
-/** Tombol Jurnal (aksi utama) — lingkaran putih 56dp di tengah navbar */
+/** Tombol Jurnal (aksi utama) — lingkaran 56dp di tengah navbar */
 @Composable
-private fun JournalButton(onClick: () -> Unit) {
+private fun JournalButton(
+    onClick: () -> Unit,
+    isActive: Boolean = false,
+) {
     val colors = GreenieTheme.colors
+    val bgColor = if (isActive) colors.surface.accent else colors.surface.white
+    val iconColor = colors.icon.onAccent
+
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(colors.surface.white)
+            .background(bgColor)
             .clickable(onClickLabel = "Tulis jurnal", role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = Icons.Outlined.Edit,
             contentDescription = "Tulis jurnal",
-            tint = colors.icon.onAccent,
+            tint = iconColor,
             modifier = Modifier.size(24.dp),
         )
     }
@@ -176,6 +184,7 @@ private fun GreenieNavbarAllStatesPreview() {
             NavbarItem.entries.forEach { item ->
                 GreenieNavbar(selected = item, onItemClick = {}, onJournalClick = {})
             }
+            GreenieNavbar(selected = null, isJournalActive = true, onItemClick = {}, onJournalClick = {})
         }
     }
 }
@@ -183,7 +192,9 @@ private fun GreenieNavbarAllStatesPreview() {
 @Preview(name = "Navbar — interaktif", widthDp = 402, heightDp = 120)
 @Composable
 private fun GreenieNavbarInteractivePreview() {
-    var selected by remember { mutableStateOf(NavbarItem.Beranda) }
+    var selected by remember { mutableStateOf<NavbarItem?>(NavbarItem.Beranda) }
+    var isJournalActive by remember { mutableStateOf(false) }
+
     GreenieTheme {
         Box(
             modifier = Modifier
@@ -192,7 +203,18 @@ private fun GreenieNavbarInteractivePreview() {
                 .padding(20.dp),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            GreenieNavbar(selected = selected, onItemClick = { selected = it }, onJournalClick = {})
+            GreenieNavbar(
+                selected = selected,
+                isJournalActive = isJournalActive,
+                onItemClick = {
+                    isJournalActive = false
+                    selected = it
+                },
+                onJournalClick = {
+                    isJournalActive = true
+                    selected = null
+                }
+            )
         }
     }
 }
