@@ -22,6 +22,9 @@ import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
 import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(
@@ -29,6 +32,7 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     val context = LocalContext.current
+    val scheduleViewModel: ScheduleViewModel = koinViewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -64,7 +68,7 @@ fun MainScreen(
                     }
                 )
                 NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
-                NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
+                NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
                 NavbarItem.Koleksi -> PlaceholderScreen(title = "Halaman Koleksi")
             }
         }
