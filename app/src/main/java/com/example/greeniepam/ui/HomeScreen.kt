@@ -501,5 +501,5 @@ private fun FeedPostCard(
                 )
             }
         }
-    }
+    )
 }
