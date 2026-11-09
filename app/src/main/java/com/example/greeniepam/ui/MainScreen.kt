@@ -21,6 +21,7 @@ import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
 
 @Composable
 fun MainScreen(
@@ -57,7 +58,11 @@ fun MainScreen(
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                NavbarItem.Beranda -> HomeScreen(onNavigateToDetail = onNavigateToDetail)
+                NavbarItem.Beranda -> HomeFeedScreen(
+                    onPostClick = { postId ->
+                        onNavigateToDetail(postId.toString())
+                    }
+                )
                 NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
                 NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
                 NavbarItem.Koleksi -> PlaceholderScreen(title = "Halaman Koleksi")
