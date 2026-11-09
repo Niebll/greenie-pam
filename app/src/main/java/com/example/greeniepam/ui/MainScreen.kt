@@ -21,10 +21,12 @@ import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.feature.profile.ui.profile.ProfileScreen
 
 @Composable
 fun MainScreen(
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToEditProfile: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     val context = LocalContext.current
@@ -60,7 +62,7 @@ fun MainScreen(
                 NavbarItem.Beranda -> HomeScreen(onNavigateToDetail = onNavigateToDetail)
                 NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
                 NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
-                NavbarItem.Koleksi -> PlaceholderScreen(title = "Halaman Koleksi")
+                NavbarItem.Koleksi -> ProfileScreen(onEditProfileClick = onNavigateToEditProfile)
             }
         }
     }

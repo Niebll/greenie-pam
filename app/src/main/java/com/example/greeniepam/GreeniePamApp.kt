@@ -2,6 +2,7 @@ package com.example.greeniepam
 
 import android.app.Application
 import com.example.greeniepam.di.appModule
+import com.example.greeniepam.feature.profile.profileModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -13,7 +14,7 @@ class GreeniePamApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@GreeniePamApp)
-            modules(appModule)
+            modules(appModule, profileModule)
         }
     }
 }
