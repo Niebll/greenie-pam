@@ -39,18 +39,6 @@ import androidx.compose.ui.unit.dp
 import com.example.greeniepam.core.theme.GreenieGradients
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
-import java.util.UUID
-
-data class JournalEntry(
-    val id: String = UUID.randomUUID().toString(),
-    val plantName: String,
-    val date: String,
-    val height: String,
-    val notes: String,
-    val condition: String,
-    val isSharedToFeed: Boolean = true,
-    val timestamp: Long = System.currentTimeMillis()
-)
 
 data class CollectionPlant(
     val id: String,

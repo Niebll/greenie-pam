@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Icon
@@ -54,6 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.ui.JournalRepository
+import kotlin.math.abs
 
 private val DetailCardGradient = Brush.verticalGradient(
     colors = listOf(
@@ -77,12 +80,28 @@ fun DetailPostScreen(
 ) {
     var commentText by remember { mutableStateOf("") }
 
-    val sampleComments = remember {
-        listOf(
-            CommentItem(1, "Raka", "Cantik banget daunnya!", isGoldAvatar = false),
-            CommentItem(2, "Salsa", "Pakai pupuk apa, Kak?", isGoldAvatar = true)
-        )
+    // Direct read of JournalRepository.journals enables Compose snapshot observation for recomposition on like/comment updates
+    val userJournal = JournalRepository.journals.find { entry ->
+        entry.id == itemId ||
+                (itemId.toLongOrNull() != null && abs(entry.id.hashCode().toLong()) == itemId.toLongOrNull()) ||
+                (entry.id == "post-1" && (itemId == "1" || itemId == "post-1"))
     }
+
+    val plantName = userJournal?.plantName ?: "Monstera"
+    val height = userJournal?.height.let { if (it.isNullOrBlank()) "32 cm" else it }
+    val condition = userJournal?.condition ?: "Daun segar"
+    val notes = userJournal?.notes?.ifBlank { "Daun baru akhirnya membuka. Pelan tapi pasti!" } ?: "Daun baru akhirnya membuka. Pelan tapi pasti!"
+    val dateStr = userJournal?.date ?: "1 Nov 2026"
+    val dateInfo = "Dari Jurnal Pertumbuhan · $dateStr"
+    val currentLikes = userJournal?.likesCount ?: 125
+    val currentIsLiked = userJournal?.isLiked ?: false
+
+    val commentItems = userJournal?.comments?.mapIndexed { index, comment ->
+        CommentItem(index + 1, comment.authorName, comment.text, isGoldAvatar = comment.authorName == "Kamu")
+    } ?: listOf(
+        CommentItem(1, "Raka", "Cantik banget daunnya!", isGoldAvatar = false),
+        CommentItem(2, "Salsa", "Pakai pupuk apa, Kak?", isGoldAvatar = true)
+    )
 
     Column(
         modifier = Modifier
@@ -182,7 +201,7 @@ fun DetailPostScreen(
                             color = Color.White,
                         )
                         Text(
-                            text = "Monstera · 45 menit lalu",
+                            text = "$plantName · $dateStr",
                             fontSize = 12.sp,
                             color = Color(0xFFA5B8AC),
                         )
@@ -238,15 +257,20 @@ fun DetailPostScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.clickable {
+                            userJournal?.let {
+                                JournalRepository.toggleLike(it.id)
+                            }
+                        }
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.FavoriteBorder,
+                            imageVector = if (currentIsLiked) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Suka",
-                            tint = Color.White,
+                            tint = if (currentIsLiked) Color(0xFFE5C16C) else Color.White,
                             modifier = Modifier.size(20.dp),
                         )
                         Text(
-                            text = "125",
+                            text = "$currentLikes",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White,
@@ -264,7 +288,7 @@ fun DetailPostScreen(
                             modifier = Modifier.size(20.dp),
                         )
                         Text(
-                            text = "24",
+                            text = "${commentItems.size}",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White,
@@ -290,7 +314,7 @@ fun DetailPostScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "Monstera",
+                            text = plantName,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -302,7 +326,7 @@ fun DetailPostScreen(
                                 .padding(horizontal = 10.dp, vertical = 5.dp),
                         ) {
                             Text(
-                                text = "Tinggi 32 cm · Daun segar",
+                                text = "Tinggi $height · $condition",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFFE5C16C),
@@ -313,7 +337,7 @@ fun DetailPostScreen(
                     Spacer(Modifier.height(10.dp))
 
                     Text(
-                        text = "Daun baru akhirnya membuka. Pelan tapi pasti!",
+                        text = notes,
                         fontSize = 14.sp,
                         color = Color.White,
                         lineHeight = 20.sp,
@@ -322,7 +346,7 @@ fun DetailPostScreen(
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "Dari Jurnal Pertumbuhan · 1 Nov 2026",
+                        text = dateInfo,
                         fontSize = 12.sp,
                         color = Color(0xFFA5B8AC),
                     )
@@ -332,7 +356,7 @@ fun DetailPostScreen(
             // ── Judul Seksi Komentar ──
             item {
                 Text(
-                    text = "Komentar (24)",
+                    text = "Komentar (${commentItems.size})",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -341,7 +365,7 @@ fun DetailPostScreen(
             }
 
             // ── Daftar Komentar ──
-            items(sampleComments) { comment ->
+            items(commentItems) { comment ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -429,6 +453,9 @@ fun DetailPostScreen(
                         .background(Color(0xFFE5C16C))
                         .clickable {
                             if (commentText.isNotBlank()) {
+                                userJournal?.let {
+                                    JournalRepository.addComment(it.id, "Kamu", commentText)
+                                }
                                 commentText = ""
                             }
                         },

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,10 +34,17 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshPosts()
+    }
+
     HomeContent(
         state = state,
         onTabSelected = viewModel::selectTab,
         onPostClick = onPostClick,
+        onLikeClick = { postId ->
+            viewModel.toggleLike(postId)
+        },
         modifier = modifier,
     )
 }
@@ -49,6 +57,7 @@ private fun HomeContent(
     state: HomeUiState,
     onTabSelected: (HomeTab) -> Unit,
     onPostClick: (Long) -> Unit = {},
+    onLikeClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -86,6 +95,7 @@ private fun HomeContent(
             PostCard(
                 post = post,
                 onClick = { onPostClick(post.id) },
+                onLikeClick = { onLikeClick(post.id) },
                 modifier = Modifier.padding(
                     horizontal = 20.dp,
                 ),
