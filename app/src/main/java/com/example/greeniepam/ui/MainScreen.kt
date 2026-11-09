@@ -19,7 +19,10 @@ import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
-import com.example.greeniepam.data.JournalRepository
+import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(
@@ -29,6 +32,7 @@ fun MainScreen(
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     var showBuatJurnal by remember { mutableStateOf(false) }
     val journalEntries = JournalRepository.journals
+    val scheduleViewModel: ScheduleViewModel = koinViewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -71,13 +75,13 @@ fun MainScreen(
                 )
             } else {
                 when (selectedTab) {
-                    NavbarItem.Beranda -> HomeScreen(
-                        journalList = journalEntries,
-                        onNavigateToDetail = onNavigateToDetail,
-                        onNavigateToDetailPost = onNavigateToDetailPost
+                    NavbarItem.Beranda -> HomeFeedScreen(
+                        onPostClick = { postId ->
+                            onNavigateToDetailPost(postId.toString())
+                        }
                     )
                     NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
-                    NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
+                    NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
                     NavbarItem.Koleksi -> KoleksiScreen(
                         journalList = journalEntries,
                         onNavigateToDetail = onNavigateToDetail,
