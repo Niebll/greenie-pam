@@ -1,6 +1,5 @@
 package com.example.greeniepam.ui
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,21 +14,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
 import com.example.greeniepam.feature.profile.ui.profile.ProfileScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
+import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToDetailPost: (String) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
-    val context = LocalContext.current
+    var showBuatJurnal by remember { mutableStateOf(false) }
+    val journalEntries = JournalRepository.journals
+    val scheduleViewModel: ScheduleViewModel = koinViewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -43,10 +48,14 @@ fun MainScreen(
                 contentAlignment = Alignment.BottomCenter
             ) {
                 GreenieNavbar(
-                    selected = selectedTab,
-                    onItemClick = { selectedTab = it },
+                    selected = if (showBuatJurnal) null else selectedTab,
+                    isJournalActive = showBuatJurnal,
+                    onItemClick = {
+                        showBuatJurnal = false
+                        selectedTab = it
+                    },
                     onJournalClick = {
-                        Toast.makeText(context, "Tombol Tulis Jurnal diklik", Toast.LENGTH_SHORT).show()
+                        showBuatJurnal = true
                     }
                 )
             }
@@ -58,11 +67,25 @@ fun MainScreen(
                 .greenieCanvas()
                 .padding(innerPadding)
         ) {
-            when (selectedTab) {
-                NavbarItem.Beranda -> HomeScreen(onNavigateToDetail = onNavigateToDetail)
-                NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
-                NavbarItem.Jadwal -> PlaceholderScreen(title = "Halaman Jadwal")
-                NavbarItem.Koleksi -> ProfileScreen(onEditProfileClick = onNavigateToEditProfile)
+            if (showBuatJurnal) {
+                BuatJurnalScreen(
+                    onSaveSuccess = { newJournal ->
+                        JournalRepository.addJournal(newJournal)
+                        showBuatJurnal = false
+                        selectedTab = NavbarItem.Koleksi
+                    }
+                )
+            } else {
+                when (selectedTab) {
+                    NavbarItem.Beranda -> HomeFeedScreen(
+                        onPostClick = { postId ->
+                            onNavigateToDetailPost(postId.toString())
+                        }
+                    )
+                    NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
+                    NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
+                    NavbarItem.Koleksi -> ProfileScreen(onEditProfileClick = onNavigateToEditProfile)
+                }
             }
         }
     }
