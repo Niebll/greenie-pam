@@ -77,6 +77,33 @@ class JournalRepository(private val supabase: SupabaseClient) {
         }
     }
 
+    /** Jurnal yang difavoritkan user yang login. */
+    suspend fun getFavorites(): List<JournalPost> {
+        val uid = requireUserId()
+        return supabase.from(JOURNALS)
+            .select(FAVORITE_COLUMNS) {
+                // !inner di kolom → hanya jurnal yang punya baris favorit milik user ini
+                filter { eq("journal_favorites.user_id", uid) }
+                order("created_at", Order.DESCENDING)
+            }
+            .decodeList<JournalRow>()
+            .map { it.toPost(uid) }
+    }
+
+    suspend fun setFavorited(journalId: Long, favorited: Boolean) {
+        if (favorited) {
+            supabase.from(FAVORITES).insert(NewFavoriteRow(journalId))
+        } else {
+            val uid = requireUserId()
+            supabase.from(FAVORITES).delete {
+                filter {
+                    eq("journal_id", journalId)
+                    eq("user_id", uid)
+                }
+            }
+        }
+    }
+
     suspend fun getComments(journalId: Long): List<JournalComment> {
         val uid = currentUserId
         return supabase.from(COMMENTS)
@@ -103,13 +130,17 @@ class JournalRepository(private val supabase: SupabaseClient) {
         const val JOURNALS = "journals"
         const val LIKES = "journal_likes"
         const val COMMENTS = "journal_comments"
+        const val FAVORITES = "journal_favorites"
 
-        val JOURNAL_COLUMNS = Columns.raw(
+        private const val BASE_COLUMNS =
             "id, user_id, plant_name, journal_date, height, notes, condition, is_shared, created_at, " +
-                // "!journals_user_id_fkey" wajib: journals terhubung ke profiles lewat 2 jalur
-                // (penulis & yang like), jadi relasinya harus disebut eksplisit.
+                // "!journals_user_id_fkey" wajib: journals terhubung ke profiles lewat beberapa jalur
+                // (penulis, yang like, yang memfavoritkan), jadi relasinya harus disebut eksplisit.
                 "profiles!journals_user_id_fkey(name), journal_likes(user_id), journal_comments(count)"
-        )
+
+        // RLS hanya mengembalikan baris favorit milik user sendiri
+        val JOURNAL_COLUMNS = Columns.raw("$BASE_COLUMNS, journal_favorites(user_id)")
+        val FAVORITE_COLUMNS = Columns.raw("$BASE_COLUMNS, journal_favorites!inner(user_id)")
     }
 }
 
@@ -129,6 +160,7 @@ private data class JournalRow(
     val profiles: NameRef? = null,
     @SerialName("journal_likes") val likes: List<LikeRef> = emptyList(),
     @SerialName("journal_comments") val comments: List<CountRef> = emptyList(),
+    @SerialName("journal_favorites") val favorites: List<LikeRef> = emptyList(),
 ) {
     fun toPost(currentUserId: String?) = JournalPost(
         id = id,
@@ -145,6 +177,7 @@ private data class JournalRow(
         isLiked = currentUserId != null && likes.any { it.userId == currentUserId },
         commentCount = comments.firstOrNull()?.count ?: 0,
         isMine = userId == currentUserId,
+        isFavorited = currentUserId != null && favorites.any { it.userId == currentUserId },
     )
 }
 
@@ -177,6 +210,9 @@ private data class NewJournalRow(
 
 @Serializable
 private data class NewLikeRow(@SerialName("journal_id") val journalId: Long)
+
+@Serializable
+private data class NewFavoriteRow(@SerialName("journal_id") val journalId: Long)
 
 @Serializable
 private data class NewCommentRow(

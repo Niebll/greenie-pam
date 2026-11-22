@@ -17,4 +17,7 @@ sealed interface Screen {
 
     @Serializable
     data object EditProfile : Screen
+
+    @Serializable
+    data object Favorites : Screen
 }

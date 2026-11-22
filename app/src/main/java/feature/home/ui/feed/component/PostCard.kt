@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Favorite
@@ -64,6 +66,7 @@ fun PostCard(
     onMoreClick: () -> Unit = {},
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
+    onFavoriteClick: () -> Unit = {},
 ) {
     val gradient = if (post.isGold) CardGoldGradient else CardGreenGradient
 
@@ -193,6 +196,7 @@ fun PostCard(
 
             // Akses Interaksi (Like & Comment)
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -231,6 +235,24 @@ fun PostCard(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                // Favorit (bookmark) — pribadi, beda dengan like
+                Box(
+                    modifier = Modifier
+                        .size(44.dp) // target sentuh minimal
+                        .clip(CircleShape)
+                        .clickable(onClick = onFavoriteClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (post.isFavorited) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                        contentDescription = if (post.isFavorited) "Hapus dari favorit" else "Simpan ke favorit",
+                        tint = if (post.isFavorited) GreenieTheme.colors.text.accent else Color.White,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
