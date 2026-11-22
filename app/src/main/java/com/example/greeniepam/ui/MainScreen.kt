@@ -30,7 +30,8 @@ import org.koin.androidx.compose.koinViewModel
 fun MainScreen(
     onNavigateToDetail: (String) -> Unit,
     onNavigateToDetailPost: (String) -> Unit = {},
-    onNavigateToEditProfile: () -> Unit = {}
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToFavorites: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     var showBuatJurnal by remember { mutableStateOf(false) }
@@ -86,6 +87,7 @@ fun MainScreen(
                     NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
                     NavbarItem.Koleksi -> ProfileScreen(
                         onEditProfileClick = onNavigateToEditProfile,
+                        onFavoritesClick = onNavigateToFavorites,
                         onPostClick = { postId -> onNavigateToDetailPost(postId.toString()) },
                     )
                 }
