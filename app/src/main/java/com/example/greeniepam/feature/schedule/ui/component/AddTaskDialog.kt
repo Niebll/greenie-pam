@@ -67,7 +67,7 @@ fun AddTaskDialog(
             Label("Tanaman")
             if (plantNames.isEmpty()) {
                 Text(
-                    text = "Belum ada tanaman. Tambahkan dulu di tab Koleksi.",
+                    text = "Belum ada tanaman. Tambahkan dulu lewat Pustaka.",
                     style = GreenieTheme.typography.body12Medium,
                     color = GreenieTheme.colors.text.accent,
                 )

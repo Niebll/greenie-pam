@@ -36,7 +36,6 @@ import com.example.greeniepam.core.model.JournalPost
 import com.example.greeniepam.core.model.PlantGradientType
 import com.example.greeniepam.core.model.PlantItem
 import com.example.greeniepam.core.theme.GreenieTheme
-import com.example.greeniepam.feature.profile.ui.profile.component.AddPlantDialog
 import com.example.greeniepam.feature.profile.ui.profile.component.JournalPostRow
 import com.example.greeniepam.feature.profile.ui.profile.component.PlantGridCard
 import com.example.greeniepam.feature.profile.ui.profile.component.ProfileBioCard
@@ -62,17 +61,9 @@ fun ProfileScreen(
         onTabSelected = viewModel::selectTab,
         onEditProfileClick = onEditProfileClick,
         onFavoritesClick = onFavoritesClick,
-        onAddPlantClick = { viewModel.showAddPlantDialog(true) },
         onPostClick = onPostClick,
         modifier = modifier,
     )
-
-    if (state.showAddPlantDialog) {
-        AddPlantDialog(
-            onDismiss = { viewModel.showAddPlantDialog(false) },
-            onAddPlant = viewModel::addPlant,
-        )
-    }
 }
 
 @Composable
@@ -81,12 +72,10 @@ private fun ProfileContent(
     onTabSelected: (ProfileTab) -> Unit,
     onEditProfileClick: () -> Unit = {},
     onFavoritesClick: () -> Unit = {},
-    onAddPlantClick: () -> Unit = {},
     onPostClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    // Kartu "Tambah" selalu ada di akhir grid tanaman
-    val plantRows = (state.plants.map<PlantItem, PlantItem?> { it } + null).chunked(3)
+    val plantRows = state.plants.chunked(3)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -137,7 +126,22 @@ private fun ProfileContent(
             )
         }
 
-        if (state.selectedTab == ProfileTab.Tanaman) {
+        if (state.selectedTab == ProfileTab.Tanaman && state.plants.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Belum ada tanaman di koleksimu.",
+                        style = GreenieTheme.typography.body12,
+                        color = GreenieTheme.colors.text.secondary,
+                    )
+                }
+            }
+        } else if (state.selectedTab == ProfileTab.Tanaman) {
             items(plantRows) { rowPlants ->
                 Row(
                     modifier = Modifier
@@ -146,11 +150,7 @@ private fun ProfileContent(
                     horizontalArrangement = Arrangement.spacedBy(GreenieTheme.spacing.space12),
                 ) {
                     rowPlants.forEach { plant ->
-                        if (plant != null) {
-                            PlantGridCard(plant = plant, modifier = Modifier.weight(1f))
-                        } else {
-                            AddPlantCard(onClick = onAddPlantClick, modifier = Modifier.weight(1f))
-                        }
+                        PlantGridCard(plant = plant, modifier = Modifier.weight(1f))
                     }
 
                     repeat(3 - rowPlants.size) {
@@ -182,34 +182,6 @@ private fun ProfileContent(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun AddPlantCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(GreenieTheme.radius.radius24)
-    Column(
-        modifier = modifier
-            .height(150.dp) // sama dengan tinggi PlantGridCard
-            .clip(shape)
-            .border(1.dp, GreenieTheme.colors.border.accentSoft, shape)
-            .background(GreenieTheme.colors.surface.cardFaint)
-            .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Add,
-            contentDescription = null,
-            tint = GreenieTheme.colors.icon.accent,
-            modifier = Modifier.size(28.dp),
-        )
-        Spacer(Modifier.height(GreenieTheme.spacing.space6))
-        Text(
-            text = "Tambah",
-            style = GreenieTheme.typography.label12,
-            color = GreenieTheme.colors.text.accent,
-        )
     }
 }
 

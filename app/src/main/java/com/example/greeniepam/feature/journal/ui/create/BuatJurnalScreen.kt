@@ -132,7 +132,7 @@ fun BuatJurnalScreen(
                 item {
                     if (uiState.plantNames.isEmpty() && !uiState.isLoadingPlants) {
                         Text(
-                            text = "Belum ada tanaman. Tambahkan dulu di tab Koleksi.",
+                            text = "Belum ada tanaman. Tambahkan dulu lewat Pustaka.",
                             style = GreenieTheme.typography.body13,
                             color = GreenieTheme.colors.text.accent,
                             modifier = Modifier.padding(horizontal = GreenieTheme.spacing.screenHorizontal),

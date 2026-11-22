@@ -18,7 +18,6 @@ data class ProfileUiState(
     val selectedTab: ProfileTab = ProfileTab.Tanaman,
     val plants: List<PlantItem> = emptyList(),
     val sharedPosts: List<JournalPost> = emptyList(),
-    val showAddPlantDialog: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
