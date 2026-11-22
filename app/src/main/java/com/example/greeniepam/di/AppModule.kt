@@ -2,6 +2,7 @@ package com.example.greeniepam.di
 
 import com.example.greeniepam.BuildConfig
 import com.example.greeniepam.core.data.JournalRepository
+import com.example.greeniepam.core.data.LibraryRepository
 import com.example.greeniepam.core.data.PlantRepository
 import com.example.greeniepam.core.data.UserRepository
 import com.example.greeniepam.core.session.SessionManager
@@ -36,6 +37,7 @@ val appModule = module {
     single { UserRepository(get()) }
     single { PlantRepository(get()) }
     single { JournalRepository(get()) }
+    single { LibraryRepository(get()) }
 
     viewModel { SessionViewModel(get()) }
 }

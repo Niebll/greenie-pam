@@ -6,22 +6,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.greeniepam.core.navbar.GreenieNavbar
 import com.example.greeniepam.core.navbar.NavbarItem
-import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
 import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
 import com.example.greeniepam.feature.journal.ui.create.BuatJurnalScreen
 import com.example.greeniepam.feature.profile.ui.profile.ProfileScreen
+import com.example.greeniepam.feature.pustaka.ui.list.PustakaScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -32,9 +31,11 @@ fun MainScreen(
     onNavigateToDetailPost: (String) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToFavorites: () -> Unit = {},
+    onNavigateToPustakaDetail: (Long) -> Unit = {},
 ) {
-    var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
-    var showBuatJurnal by remember { mutableStateOf(false) }
+    // rememberSaveable: tab tetap sama saat kembali dari halaman detail
+    var selectedTab by rememberSaveable { mutableStateOf(NavbarItem.Beranda) }
+    var showBuatJurnal by rememberSaveable { mutableStateOf(false) }
     val scheduleViewModel: ScheduleViewModel = koinViewModel()
 
     Scaffold(
@@ -83,7 +84,7 @@ fun MainScreen(
                             onNavigateToDetailPost(postId.toString())
                         }
                     )
-                    NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
+                    NavbarItem.Pustaka -> PustakaScreen(onPlantClick = onNavigateToPustakaDetail)
                     NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
                     NavbarItem.Koleksi -> ProfileScreen(
                         onEditProfileClick = onNavigateToEditProfile,
@@ -93,19 +94,5 @@ fun MainScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title,
-            style = GreenieTheme.typography.heading20,
-            color = GreenieTheme.colors.text.primary
-        )
     }
 }

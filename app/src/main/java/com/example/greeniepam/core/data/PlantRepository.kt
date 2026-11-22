@@ -24,9 +24,10 @@ class PlantRepository(private val supabase: SupabaseClient) {
             }
             .decodeList<PlantItem>()
 
-    suspend fun addPlant(name: String, gradientType: PlantGradientType): PlantItem =
+    /** @param libraryId isi kalau tanaman ditambahkan dari Pustaka */
+    suspend fun addPlant(name: String, gradientType: PlantGradientType, libraryId: Long? = null): PlantItem =
         supabase.from(TABLE)
-            .insert(NewPlantRow(name = name, gradientType = gradientType)) { select(COLUMNS) }
+            .insert(NewPlantRow(name = name, gradientType = gradientType, libraryId = libraryId)) { select(COLUMNS) }
             .decodeSingle<PlantItem>()
 
     suspend fun deletePlant(id: Long) {
@@ -35,7 +36,7 @@ class PlantRepository(private val supabase: SupabaseClient) {
 
     private companion object {
         const val TABLE = "plants"
-        val COLUMNS = Columns.list("id", "name", "gradient_type")
+        val COLUMNS = Columns.list("id", "name", "gradient_type", "library_id")
     }
 }
 
@@ -43,4 +44,5 @@ class PlantRepository(private val supabase: SupabaseClient) {
 private data class NewPlantRow(
     val name: String,
     @SerialName("gradient_type") val gradientType: PlantGradientType,
+    @SerialName("library_id") val libraryId: Long?,
 )

@@ -20,4 +20,7 @@ sealed interface Screen {
 
     @Serializable
     data object Favorites : Screen
+
+    @Serializable
+    data class PustakaDetail(val plantId: Long) : Screen
 }
