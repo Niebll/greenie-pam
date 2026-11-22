@@ -17,6 +17,8 @@ data class JournalPost(
     val isLiked: Boolean,
     val commentCount: Int,
     val isMine: Boolean,
+    /** Disimpan ke Favorit oleh user yang login (pribadi, beda dengan like). */
+    val isFavorited: Boolean = false,
 )
 
 data class JournalComment(

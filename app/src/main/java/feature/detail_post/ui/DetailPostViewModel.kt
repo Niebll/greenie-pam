@@ -66,6 +66,24 @@ class DetailPostViewModel(private val journalRepository: JournalRepository) : Vi
         }
     }
 
+    fun toggleFavorite() {
+        val post = _uiState.value.post ?: return
+        val favorited = !post.isFavorited
+        setFavoriteLocally(favorited)
+        viewModelScope.launch {
+            try {
+                journalRepository.setFavorited(post.id, favorited)
+            } catch (e: Exception) {
+                setFavoriteLocally(!favorited)
+                _uiState.update { it.copy(error = e.toUserMessage()) }
+            }
+        }
+    }
+
+    private fun setFavoriteLocally(favorited: Boolean) {
+        _uiState.update { state -> state.copy(post = state.post?.copy(isFavorited = favorited)) }
+    }
+
     fun sendComment() {
         val id = journalId ?: return
         val text = _uiState.value.commentText.trim()

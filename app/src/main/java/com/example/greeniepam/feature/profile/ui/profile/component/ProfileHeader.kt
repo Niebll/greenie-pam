@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ fun ProfileHeader(
     modifier: Modifier = Modifier,
     onEditProfileClick: () -> Unit = {},
     onShareProfileClick: () -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -110,6 +112,24 @@ fun ProfileHeader(
                     )
                 }
             }
+        }
+
+        // Tombol ke halaman Favorit (gaya kaca seperti tombol ikon di Beranda)
+        Box(
+            modifier = Modifier
+                .align(Alignment.Top)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(GreenieTheme.colors.surface.glass)
+                .clickable(onClick = onFavoritesClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.BookmarkBorder,
+                contentDescription = "Favorit",
+                tint = GreenieTheme.colors.icon.white,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
