@@ -1,6 +1,7 @@
 package com.example.greeniepam.feature.profile.ui.profile
 
-import com.example.greeniepam.feature.profile.data.model.PlantItem
+import com.example.greeniepam.core.model.JournalPost
+import com.example.greeniepam.core.model.PlantItem
 
 enum class ProfileTab(val label: String) {
     Tanaman("Tanaman"),
@@ -8,13 +9,16 @@ enum class ProfileTab(val label: String) {
 }
 
 data class ProfileUiState(
-    val userName: String = "Dinda",
-    val usernameHandle: String = "@dinda.greenie",
-    val plantCount: Int = 9,
-    val sharedCount: Int = 6,
-    val likeCount: Int = 240,
-    val bio: String = "Mahasiswa, pecinta tanaman hias.\nKoleksi kecil di kamar kost.",
+    val userName: String = "",
+    val usernameHandle: String = "",
+    val plantCount: Int = 0,
+    val sharedCount: Int = 0,
+    val likeCount: Int = 0,
+    val bio: String = "",
     val selectedTab: ProfileTab = ProfileTab.Tanaman,
     val plants: List<PlantItem> = emptyList(),
+    val sharedPosts: List<JournalPost> = emptyList(),
+    val showAddPlantDialog: Boolean = false,
     val isLoading: Boolean = false,
+    val error: String? = null,
 )

@@ -55,8 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
-import com.example.greeniepam.ui.JournalRepository
-import kotlin.math.abs
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 
 private val DetailCardGradient = Brush.verticalGradient(
     colors = listOf(
@@ -67,7 +68,7 @@ private val DetailCardGradient = Brush.verticalGradient(
 )
 
 data class CommentItem(
-    val id: Int,
+    val id: Long,
     val authorName: String,
     val text: String,
     val isGoldAvatar: Boolean = false
@@ -75,33 +76,53 @@ data class CommentItem(
 
 @Composable
 fun DetailPostScreen(
-    itemId: String = "1",
-    onBack: () -> Unit = {}
+    itemId: String,
+    onBack: () -> Unit = {},
+    viewModel: DetailPostViewModel = koinViewModel(key = "detail-post-$itemId"),
 ) {
-    var commentText by remember { mutableStateOf("") }
+    LaunchedEffect(itemId) {
+        itemId.toLongOrNull()?.let(viewModel::load)
+    }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Direct read of JournalRepository.journals enables Compose snapshot observation for recomposition on like/comment updates
-    val userJournal = JournalRepository.journals.find { entry ->
-        entry.id == itemId ||
-                (itemId.toLongOrNull() != null && abs(entry.id.hashCode().toLong()) == itemId.toLongOrNull()) ||
-                (entry.id == "post-1" && (itemId == "1" || itemId == "post-1"))
+    DetailPostContent(
+        state = state,
+        onBack = onBack,
+        onLikeClick = viewModel::toggleLike,
+        onCommentTextChange = viewModel::onCommentTextChange,
+        onSendComment = viewModel::sendComment,
+    )
+}
+
+@Composable
+private fun DetailPostContent(
+    state: DetailPostUiState,
+    onBack: () -> Unit,
+    onLikeClick: () -> Unit,
+    onCommentTextChange: (String) -> Unit,
+    onSendComment: () -> Unit,
+) {
+    val post = state.post
+    val commentText = state.commentText
+
+    val authorName = post?.authorName.orEmpty()
+    val plantName = post?.plantName.orEmpty()
+    val height = post?.height.orEmpty()
+    val condition = post?.condition.orEmpty()
+    val notes = post?.notes?.ifBlank { "Perkembangan tanaman $plantName." }.orEmpty()
+    val dateStr = post?.journalDate.orEmpty()
+    val dateInfo = "Dari Jurnal Pertumbuhan · $dateStr"
+    val currentLikes = post?.likeCount ?: 0
+    val currentIsLiked = post?.isLiked ?: false
+    val statusText = when {
+        state.isLoading && post == null -> "Memuat postingan..."
+        post == null -> state.error ?: "Postingan tidak ditemukan."
+        else -> null
     }
 
-    val plantName = userJournal?.plantName ?: "Monstera"
-    val height = userJournal?.height.let { if (it.isNullOrBlank()) "32 cm" else it }
-    val condition = userJournal?.condition ?: "Daun segar"
-    val notes = userJournal?.notes?.ifBlank { "Daun baru akhirnya membuka. Pelan tapi pasti!" } ?: "Daun baru akhirnya membuka. Pelan tapi pasti!"
-    val dateStr = userJournal?.date ?: "1 Nov 2026"
-    val dateInfo = "Dari Jurnal Pertumbuhan · $dateStr"
-    val currentLikes = userJournal?.likesCount ?: 125
-    val currentIsLiked = userJournal?.isLiked ?: false
-
-    val commentItems = userJournal?.comments?.mapIndexed { index, comment ->
-        CommentItem(index + 1, comment.authorName, comment.text, isGoldAvatar = comment.authorName == "Kamu")
-    } ?: listOf(
-        CommentItem(1, "Raka", "Cantik banget daunnya!", isGoldAvatar = false),
-        CommentItem(2, "Salsa", "Pakai pupuk apa, Kak?", isGoldAvatar = true)
-    )
+    val commentItems = state.comments.map { comment ->
+        CommentItem(comment.id, comment.authorName, comment.body, isGoldAvatar = comment.isMine)
+    }
 
     Column(
         modifier = Modifier
@@ -168,6 +189,18 @@ fun DetailPostScreen(
                 .weight(1f),
             contentPadding = PaddingValues(bottom = 12.dp),
         ) {
+            if (statusText != null) {
+                item {
+                    Text(
+                        text = statusText,
+                        style = GreenieTheme.typography.body13,
+                        color = GreenieTheme.colors.text.secondary,
+                        modifier = Modifier.padding(GreenieTheme.spacing.screenHorizontal),
+                    )
+                }
+                return@LazyColumn
+            }
+
             // ── Info Penulis (Avatar + Nama + Tag "Postinganmu") ──
             item {
                 Row(
@@ -184,7 +217,7 @@ fun DetailPostScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "D",
+                            text = authorName.firstOrNull()?.uppercase().orEmpty(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -195,7 +228,7 @@ fun DetailPostScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Dinda",
+                            text = authorName,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -207,19 +240,21 @@ fun DetailPostScreen(
                         )
                     }
 
-                    // Tag "Postinganmu"
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0x24C7A75C))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    ) {
-                        Text(
-                            text = "Postinganmu",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFFE5C16C),
-                        )
+                    // Tag "Postinganmu" (hanya untuk postingan sendiri)
+                    if (post?.isMine == true) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0x24C7A75C))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                        ) {
+                            Text(
+                                text = "Postinganmu",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFE5C16C),
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -257,11 +292,7 @@ fun DetailPostScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.clickable {
-                            userJournal?.let {
-                                JournalRepository.toggleLike(it.id)
-                            }
-                        }
+                        modifier = Modifier.clickable(onClick = onLikeClick)
                     ) {
                         Icon(
                             imageVector = if (currentIsLiked) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
@@ -326,7 +357,10 @@ fun DetailPostScreen(
                                 .padding(horizontal = 10.dp, vertical = 5.dp),
                         ) {
                             Text(
-                                text = "Tinggi $height · $condition",
+                                text = listOfNotNull(
+                                height.takeIf { it.isNotBlank() }?.let { "Tinggi $it" },
+                                condition.takeIf { it.isNotBlank() },
+                            ).joinToString(" · "),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFFE5C16C),
@@ -381,7 +415,7 @@ fun DetailPostScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = comment.authorName.first().toString(),
+                            text = comment.authorName.firstOrNull()?.uppercase().orEmpty(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -427,7 +461,7 @@ fun DetailPostScreen(
             ) {
                 BasicTextField(
                     value = commentText,
-                    onValueChange = { commentText = it },
+                    onValueChange = onCommentTextChange,
                     modifier = Modifier.weight(1f),
                     textStyle = TextStyle(
                         fontSize = 14.sp,
@@ -451,14 +485,7 @@ fun DetailPostScreen(
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFE5C16C))
-                        .clickable {
-                            if (commentText.isNotBlank()) {
-                                userJournal?.let {
-                                    JournalRepository.addComment(it.id, "Kamu", commentText)
-                                }
-                                commentText = ""
-                            }
-                        },
+                        .clickable(enabled = !state.isSending && post != null, onClick = onSendComment),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -481,6 +508,23 @@ fun DetailPostScreen(
 @Composable
 private fun DetailPostScreenPreview() {
     GreenieTheme {
-        DetailPostScreen()
+        DetailPostContent(
+            state = DetailPostUiState(
+                isLoading = false,
+                post = com.example.greeniepam.core.model.JournalPost(
+                    id = 1, authorId = "a", authorName = "Dinda", plantName = "Monstera",
+                    journalDate = "1 Nov 2026", height = "32 cm", notes = "Daun baru akhirnya membuka.",
+                    condition = "Segar", isShared = true, createdAt = "", likeCount = 125,
+                    isLiked = false, commentCount = 1, isMine = true,
+                ),
+                comments = listOf(
+                    com.example.greeniepam.core.model.JournalComment(1, "Raka", "Cantik banget daunnya!", false),
+                ),
+            ),
+            onBack = {},
+            onLikeClick = {},
+            onCommentTextChange = {},
+            onSendComment = {},
+        )
     }
 }
