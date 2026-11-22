@@ -21,6 +21,7 @@ import com.example.greeniepam.feature.auth.ui.AuthScreen
 import com.example.greeniepam.feature.detail_post.ui.DetailPostScreen
 import com.example.greeniepam.feature.profile.ui.edit_profile.EditProfileScreen
 import com.example.greeniepam.feature.profile.ui.favorites.FavoritesScreen
+import com.example.greeniepam.feature.pustaka.ui.detail.PustakaDetailScreen
 import com.example.greeniepam.ui.DetailScreen
 import com.example.greeniepam.ui.MainScreen
 import org.koin.androidx.compose.koinViewModel
@@ -71,6 +72,9 @@ fun AppNavGraph(
                 },
                 onNavigateToFavorites = {
                     navController.navigate(Screen.Favorites)
+                },
+                onNavigateToPustakaDetail = { plantId ->
+                    navController.navigate(Screen.PustakaDetail(plantId))
                 }
             )
         }
@@ -78,6 +82,13 @@ fun AppNavGraph(
             FavoritesScreen(
                 onBack = { navController.popBackStack() },
                 onPostClick = { postId -> navController.navigate(Screen.DetailPost(postId.toString())) }
+            )
+        }
+        composable<Screen.PustakaDetail> { backStackEntry ->
+            val detail: Screen.PustakaDetail = backStackEntry.toRoute()
+            PustakaDetailScreen(
+                plantId = detail.plantId,
+                onBack = { navController.popBackStack() }
             )
         }
         composable<Screen.Detail> { backStackEntry ->

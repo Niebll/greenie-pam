@@ -17,4 +17,6 @@ data class PlantItem(
     val id: Long,
     val name: String,
     @SerialName("gradient_type") val gradientType: PlantGradientType = PlantGradientType.GREEN,
+    /** ID katalog Pustaka asal tanaman ini; null kalau ditambah manual. */
+    @SerialName("library_id") val libraryId: Long? = null,
 )
