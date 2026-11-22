@@ -24,6 +24,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.clip
+import com.example.greeniepam.feature.schedule.ui.component.AddTaskDialog
 import com.example.greeniepam.feature.schedule.ui.component.CalendarCard
 import com.example.greeniepam.feature.schedule.ui.component.ScheduleToastView
 import com.example.greeniepam.feature.schedule.ui.component.StreakCard
@@ -36,6 +47,16 @@ fun ScheduleScreen(
     viewModel: ScheduleViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.refresh() }
+
+    if (uiState.showAddTaskDialog) {
+        AddTaskDialog(
+            plantNames = uiState.plantNames,
+            date = uiState.selectedDate,
+            onDismiss = { viewModel.showAddTaskDialog(false) },
+            onAddTask = viewModel::addTask,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -90,6 +111,35 @@ fun ScheduleScreen(
                         title = "Tugas · $dateStr",
                         subtitle = "$completedCount dari $totalCount selesai"
                     )
+                    Spacer(modifier = Modifier.height(GreenieTheme.spacing.space8))
+                    val addShape = RoundedCornerShape(GreenieTheme.radius.full)
+                    Row(
+                        modifier = Modifier
+                            .clip(addShape)
+                            .border(1.dp, GreenieTheme.colors.border.accent, addShape)
+                            .clickable { viewModel.showAddTaskDialog(true) }
+                            .padding(horizontal = GreenieTheme.spacing.space14, vertical = GreenieTheme.spacing.space10),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = null,
+                            tint = GreenieTheme.colors.icon.accent,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(GreenieTheme.spacing.space6))
+                        Text(
+                            text = "Tambah jadwal",
+                            style = GreenieTheme.typography.label12,
+                            color = GreenieTheme.colors.text.accent,
+                        )
+                    }
+                }
+            }
+
+            uiState.error?.let { error ->
+                item {
+                    Text(text = error, style = GreenieTheme.typography.body12Medium, color = GreenieTheme.colors.text.danger)
                 }
             }
 

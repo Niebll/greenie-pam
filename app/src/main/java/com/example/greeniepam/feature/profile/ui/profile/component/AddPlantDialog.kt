@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.greeniepam.core.theme.GreenieTheme
-import com.example.greeniepam.feature.profile.data.model.PlantGradientType
+import com.example.greeniepam.core.model.PlantGradientType
 
 @Composable
 fun AddPlantDialog(

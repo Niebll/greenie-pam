@@ -1,23 +1,29 @@
 package com.example.greeniepam.di
 
+import com.example.greeniepam.BuildConfig
+import com.example.greeniepam.core.data.JournalRepository
+import com.example.greeniepam.core.data.PlantRepository
+import com.example.greeniepam.core.data.UserRepository
+import com.example.greeniepam.core.session.SessionManager
+import com.example.greeniepam.core.session.SessionViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
-import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.Realtime
-import io.github.jan.supabase.realtime.realtime
+import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.github.jan.supabase.storage.Storage
-import io.github.jan.supabase.storage.storage
+import kotlinx.serialization.json.Json
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
     single<SupabaseClient> {
         createSupabaseClient(
-            supabaseUrl = "YOUR_SUPABASE_URL",
-            supabaseKey = "YOUR_SUPABASE_ANON_KEY"
+            supabaseUrl = BuildConfig.SUPABASE_URL,
+            supabaseKey = BuildConfig.SUPABASE_ANON_KEY
         ) {
+            defaultSerializer = KotlinXSerializer(Json { ignoreUnknownKeys = true })
             install(Postgrest)
             install(Auth)
             install(Realtime)
@@ -25,8 +31,11 @@ val appModule = module {
         }
     }
 
-    single { get<SupabaseClient>().postgrest }
-    single { get<SupabaseClient>().auth }
-    single { get<SupabaseClient>().realtime }
-    single { get<SupabaseClient>().storage }
+    // Data yang dipakai bersama oleh beberapa fitur
+    single { SessionManager(get()) }
+    single { UserRepository(get()) }
+    single { PlantRepository(get()) }
+    single { JournalRepository(get()) }
+
+    viewModel { SessionViewModel(get()) }
 }

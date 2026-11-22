@@ -1,24 +1,62 @@
 package com.example.greeniepam.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.greeniepam.core.session.SessionState
+import com.example.greeniepam.core.session.SessionViewModel
+import com.example.greeniepam.core.theme.greenieCanvas
+import com.example.greeniepam.feature.auth.ui.AuthScreen
 import com.example.greeniepam.feature.detail_post.ui.DetailPostScreen
 import com.example.greeniepam.feature.profile.ui.edit_profile.EditProfileScreen
 import com.example.greeniepam.ui.DetailScreen
 import com.example.greeniepam.ui.MainScreen
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AppNavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    sessionViewModel: SessionViewModel = koinViewModel(),
 ) {
+    val session by sessionViewModel.state.collectAsStateWithLifecycle()
+
+    if (session == SessionState.Loading) {
+        // Sesi tersimpan sedang dimuat — tampilkan latar kosong sebentar
+        Box(Modifier.fillMaxSize().greenieCanvas())
+        return
+    }
+
+    val startDestination: Screen = remember { if (session == SessionState.LoggedIn) Screen.Home else Screen.Auth }
+
+    // Pindah otomatis saat user login atau keluar
+    LaunchedEffect(session) {
+        val onAuthScreen = navController.currentDestination?.hasRoute<Screen.Auth>() == true
+        when {
+            session == SessionState.LoggedIn && onAuthScreen ->
+                navController.navigate(Screen.Home) { popUpTo(navController.graph.id) { inclusive = true } }
+            session == SessionState.LoggedOut && !onAuthScreen ->
+                navController.navigate(Screen.Auth) { popUpTo(navController.graph.id) { inclusive = true } }
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Home
+        startDestination = startDestination
     ) {
+        composable<Screen.Auth> {
+            AuthScreen()
+        }
         composable<Screen.Home> {
             MainScreen(
                 onNavigateToDetail = { id ->

@@ -1,0 +1,4 @@
+# Salin file ini menjadi local.properties, lalu isi nilainya (minta ke ketua tim).
+# Pakai publishable/anon key. JANGAN pakai secret/service_role key.
+SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxxxxxx
