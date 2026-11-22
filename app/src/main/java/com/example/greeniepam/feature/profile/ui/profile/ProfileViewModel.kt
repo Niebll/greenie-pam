@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.greeniepam.core.data.JournalRepository
 import com.example.greeniepam.core.data.PlantRepository
 import com.example.greeniepam.core.data.UserRepository
-import com.example.greeniepam.core.model.PlantGradientType
 import com.example.greeniepam.core.util.toUserMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -61,21 +60,4 @@ class ProfileViewModel(
         }
     }
 
-    fun showAddPlantDialog(show: Boolean) {
-        _uiState.update { it.copy(showAddPlantDialog = show) }
-    }
-
-    fun addPlant(name: String, gradientType: PlantGradientType) {
-        viewModelScope.launch {
-            try {
-                val plant = plantRepository.addPlant(name, gradientType)
-                _uiState.update {
-                    val plants = it.plants + plant
-                    it.copy(plants = plants, plantCount = plants.size, showAddPlantDialog = false)
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.toUserMessage(), showAddPlantDialog = false) }
-            }
-        }
-    }
 }
