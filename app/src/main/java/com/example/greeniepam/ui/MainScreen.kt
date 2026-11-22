@@ -20,6 +20,7 @@ import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
 import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
+import com.example.greeniepam.feature.profile.ui.profile.ProfileScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -27,7 +28,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun MainScreen(
     onNavigateToDetail: (String) -> Unit,
-    onNavigateToDetailPost: (String) -> Unit = {}
+    onNavigateToDetailPost: (String) -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     var showBuatJurnal by remember { mutableStateOf(false) }
@@ -82,11 +84,7 @@ fun MainScreen(
                     )
                     NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
                     NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
-                    NavbarItem.Koleksi -> KoleksiScreen(
-                        journalList = journalEntries,
-                        onNavigateToDetail = onNavigateToDetail,
-                        onNavigateToDetailPost = onNavigateToDetailPost
-                    )
+                    NavbarItem.Koleksi -> ProfileScreen(onEditProfileClick = onNavigateToEditProfile)
                 }
             }
         }
