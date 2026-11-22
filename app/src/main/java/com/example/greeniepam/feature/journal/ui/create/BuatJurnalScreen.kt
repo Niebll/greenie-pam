@@ -1,4 +1,4 @@
-package com.example.greeniepam.ui
+package com.example.greeniepam.feature.journal.ui.create
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -46,22 +46,37 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.greeniepam.core.model.NewJournal
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-private val samplePlantList = listOf("Monstera", "Pothos", "Kaktus mini", "Calathea")
 private val quickNotesOptions = listOf("Daun baru muncul", "Daun menguning", "Sudah disiram")
 private val leafConditionOptions = listOf("Segar", "Menguning", "Layu")
 
 @Composable
 fun BuatJurnalScreen(
-    onSaveSuccess: (JournalEntry) -> Unit = {}
+    onSaveSuccess: () -> Unit = {},
+    viewModel: BuatJurnalViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.loadPlants() }
 
-    var selectedPlant by remember { mutableStateOf("Monstera") }
-    var tanggalText by remember { mutableStateOf("1 Nov 2026") }
-    var tinggiText by remember { mutableStateOf("32 cm") }
+    var selectedPlant by remember { mutableStateOf("") }
+    // Pilih tanaman pertama otomatis setelah daftar tanaman termuat
+    LaunchedEffect(uiState.plantNames) {
+        if (selectedPlant !in uiState.plantNames) selectedPlant = uiState.plantNames.firstOrNull().orEmpty()
+    }
+    var tanggalText by remember {
+        mutableStateOf(LocalDate.now().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale("id", "ID"))))
+    }
+    var tinggiText by remember { mutableStateOf("") }
     var notesText by remember { mutableStateOf("") }
     var selectedCondition by remember { mutableStateOf("Segar") }
     var shareToFeed by remember { mutableStateOf(true) }
@@ -115,11 +130,19 @@ fun BuatJurnalScreen(
 
                 // Horizontal Plant Choice Chips
                 item {
+                    if (uiState.plantNames.isEmpty() && !uiState.isLoadingPlants) {
+                        Text(
+                            text = "Belum ada tanaman. Tambahkan dulu di tab Koleksi.",
+                            style = GreenieTheme.typography.body13,
+                            color = GreenieTheme.colors.text.accent,
+                            modifier = Modifier.padding(horizontal = GreenieTheme.spacing.screenHorizontal),
+                        )
+                    }
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = GreenieTheme.spacing.screenHorizontal),
                         horizontalArrangement = Arrangement.spacedBy(GreenieTheme.spacing.space8)
                     ) {
-                        items(samplePlantList) { plantName ->
+                        items(uiState.plantNames) { plantName ->
                             val isSelected = plantName == selectedPlant
                             val chipShape = RoundedCornerShape(GreenieTheme.radius.full)
                             Box(
@@ -371,18 +394,29 @@ fun BuatJurnalScreen(
                     Column(
                         modifier = Modifier.padding(horizontal = GreenieTheme.spacing.screenHorizontal)
                     ) {
+                        uiState.error?.let {
+                            Text(
+                                text = it,
+                                style = GreenieTheme.typography.body12Medium,
+                                color = GreenieTheme.colors.text.danger,
+                            )
+                            Spacer(modifier = Modifier.height(GreenieTheme.spacing.space8))
+                        }
                         Button(
+                            enabled = !uiState.isSaving && selectedPlant.isNotBlank(),
                             onClick = {
-                                val newEntry = JournalEntry(
+                                val newJournal = NewJournal(
                                     plantName = selectedPlant,
-                                    date = tanggalText.ifBlank { "Hari ini" },
-                                    height = tinggiText,
-                                    notes = notesText,
+                                    journalDate = tanggalText.ifBlank { "Hari ini" },
+                                    height = tinggiText.trim(),
+                                    notes = notesText.trim(),
                                     condition = selectedCondition,
-                                    isSharedToFeed = shareToFeed
+                                    isShared = shareToFeed,
                                 )
-                                Toast.makeText(context, "Jurnal $selectedPlant berhasil disimpan ke Koleksi!", Toast.LENGTH_SHORT).show()
-                                onSaveSuccess(newEntry)
+                                viewModel.save(newJournal) {
+                                    Toast.makeText(context, "Jurnal $selectedPlant berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                                    onSaveSuccess()
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = GreenieTheme.colors.surface.accent,
@@ -394,7 +428,11 @@ fun BuatJurnalScreen(
                                 .height(54.dp)
                         ) {
                             Text(
-                                text = "Simpan & bagikan",
+                                text = when {
+                                    uiState.isSaving -> "Menyimpan..."
+                                    shareToFeed -> "Simpan & bagikan"
+                                    else -> "Simpan"
+                                },
                                 style = GreenieTheme.typography.title15
                             )
                         }

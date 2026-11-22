@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,6 +86,21 @@ private fun HomeContent(
                 selectedTab = state.selectedTab,
                 onTabSelected = onTabSelected,
             )
+        }
+
+        // ── Info kosong / error ──
+        if (state.posts.isEmpty() && !state.isLoading) {
+            item {
+                Text(
+                    text = state.error ?: "Belum ada postingan. Buat jurnal pertamamu lewat tombol di tengah navbar!",
+                    style = GreenieTheme.typography.body13,
+                    color = if (state.error != null) GreenieTheme.colors.text.danger else GreenieTheme.colors.text.secondary,
+                    modifier = Modifier.padding(
+                        horizontal = GreenieTheme.spacing.screenHorizontal,
+                        vertical = GreenieTheme.spacing.space24,
+                    ),
+                )
+            }
         }
 
         // ── Feed postingan ──

@@ -20,6 +20,7 @@ import com.example.greeniepam.core.navbar.NavbarItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
 import com.example.greeniepam.feature.home.ui.feed.HomeScreen as HomeFeedScreen
+import com.example.greeniepam.feature.journal.ui.create.BuatJurnalScreen
 import com.example.greeniepam.feature.profile.ui.profile.ProfileScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleScreen
 import com.example.greeniepam.feature.schedule.ui.ScheduleViewModel
@@ -33,7 +34,6 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableStateOf(NavbarItem.Beranda) }
     var showBuatJurnal by remember { mutableStateOf(false) }
-    val journalEntries = JournalRepository.journals
     val scheduleViewModel: ScheduleViewModel = koinViewModel()
 
     Scaffold(
@@ -69,10 +69,10 @@ fun MainScreen(
         ) {
             if (showBuatJurnal) {
                 BuatJurnalScreen(
-                    onSaveSuccess = { newJournal ->
-                        JournalRepository.addJournal(newJournal)
+                    onSaveSuccess = {
                         showBuatJurnal = false
-                        selectedTab = NavbarItem.Koleksi
+                        // Jurnal yang dibagikan muncul di Beranda dan tab "Dibagikan" di profil
+                        selectedTab = NavbarItem.Beranda
                     }
                 )
             } else {
@@ -84,7 +84,10 @@ fun MainScreen(
                     )
                     NavbarItem.Pustaka -> PlaceholderScreen(title = "Halaman Pustaka")
                     NavbarItem.Jadwal -> ScheduleScreen(viewModel = scheduleViewModel)
-                    NavbarItem.Koleksi -> ProfileScreen(onEditProfileClick = onNavigateToEditProfile)
+                    NavbarItem.Koleksi -> ProfileScreen(
+                        onEditProfileClick = onNavigateToEditProfile,
+                        onPostClick = { postId -> onNavigateToDetailPost(postId.toString()) },
+                    )
                 }
             }
         }

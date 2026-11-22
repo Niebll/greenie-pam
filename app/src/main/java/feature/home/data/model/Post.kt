@@ -1,7 +1,7 @@
 package com.example.greeniepam.feature.home.data.model
 
 /**
- * Model data untuk postingan di feed Home.
+ * Model tampilan untuk postingan di feed Home.
  */
 data class Post(
     val id: Long,
@@ -13,6 +13,7 @@ data class Post(
     val caption: String,
     val likeCount: Int = 0,
     val commentCount: Int = 0,
+    val isLiked: Boolean = false,
     /** true = kartu emas (gold), false = kartu hijau (green) */
     val isGold: Boolean = false,
 )
