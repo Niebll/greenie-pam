@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Icon
@@ -201,9 +202,9 @@ fun PostCard(
                     modifier = Modifier.clickable(onClick = onLikeClick),
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Suka",
-                        tint = Color.White,
+                        imageVector = if (post.isLiked) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (post.isLiked) "Batal suka" else "Suka",
+                        tint = if (post.isLiked) GreenieTheme.colors.text.accent else Color.White,
                         modifier = Modifier.size(18.dp),
                     )
                     Text(

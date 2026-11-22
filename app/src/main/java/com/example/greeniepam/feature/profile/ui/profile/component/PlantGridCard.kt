@@ -21,8 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.greeniepam.core.theme.GreenieTheme
-import com.example.greeniepam.feature.profile.data.model.PlantGradientType
-import com.example.greeniepam.feature.profile.data.model.PlantItem
+import com.example.greeniepam.core.model.PlantGradientType
+import com.example.greeniepam.core.model.PlantItem
 
 private val GreenPlantGradient = Brush.verticalGradient(
     colors = listOf(

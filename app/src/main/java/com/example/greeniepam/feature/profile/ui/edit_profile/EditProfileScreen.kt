@@ -42,19 +42,52 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.core.theme.greenieCanvas
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun EditProfileScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onSaveSuccess: () -> Unit = {},
+    viewModel: EditProfileViewModel = koinViewModel(),
 ) {
-    var name by remember { mutableStateOf("Dinda") }
-    var username by remember { mutableStateOf("dinda.greenie") }
-    var bio by remember { mutableStateOf("Mahasiswa, pecinta tanaman hias.\nKoleksi kecil di kamar kost.") }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    EditProfileContent(
+        state = state,
+        onBack = onBack,
+        onNameChange = viewModel::onNameChange,
+        onUsernameChange = viewModel::onUsernameChange,
+        onBioChange = viewModel::onBioChange,
+        onSave = {
+            viewModel.save {
+                Toast.makeText(context, "Profil berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                onBack()
+            }
+        },
+        onSignOut = viewModel::signOut,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun EditProfileContent(
+    state: EditProfileUiState,
+    onBack: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onUsernameChange: (String) -> Unit,
+    onBioChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onSignOut: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val name = state.name
+    val username = state.username
+    val bio = state.bio
 
     Box(
         modifier = modifier
@@ -104,16 +137,12 @@ fun EditProfileScreen(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color(0xFFE5C16C))
-                        .clickable {
-                            Toast.makeText(context, "Profil berhasil disimpan!", Toast.LENGTH_SHORT).show()
-                            onSaveSuccess()
-                            onBack()
-                        }
+                        .clickable(enabled = !state.isSaving && !state.isLoading, onClick = onSave)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "Simpan",
+                        text = if (state.isSaving) "Menyimpan..." else "Simpan",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F2418),
@@ -192,14 +221,14 @@ fun EditProfileScreen(
                 FormFieldItem(
                     label = "Nama Lengkap",
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = onNameChange,
                     placeholder = "Masukkan nama lengkap",
                 )
 
                 FormFieldItem(
                     label = "Username",
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = onUsernameChange,
                     placeholder = "Masukkan username",
                     prefix = "@",
                 )
@@ -207,11 +236,36 @@ fun EditProfileScreen(
                 FormFieldItem(
                     label = "Bio / Deskripsi Profil",
                     value = bio,
-                    onValueChange = { bio = it },
+                    onValueChange = onBioChange,
                     placeholder = "Tulis bio singkat...",
                     isSingleLine = false,
                     height = 100.dp,
                 )
+
+                state.error?.let {
+                    Text(
+                        text = it,
+                        style = GreenieTheme.typography.body12Medium,
+                        color = GreenieTheme.colors.text.danger,
+                    )
+                }
+
+                // Tombol Keluar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp) // target sentuh ≥ 44dp
+                        .clip(CircleShape)
+                        .border(1.dp, GreenieTheme.colors.border.dangerSoft, CircleShape)
+                        .clickable(onClick = onSignOut),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Keluar",
+                        style = GreenieTheme.typography.title14,
+                        color = GreenieTheme.colors.text.danger,
+                    )
+                }
             }
         }
     }
@@ -287,6 +341,19 @@ private fun FormFieldItem(
 @Composable
 private fun EditProfileScreenPreview() {
     GreenieTheme {
-        EditProfileScreen()
+        EditProfileContent(
+            state = EditProfileUiState(
+                name = "Dinda",
+                username = "dinda.greenie",
+                bio = "Mahasiswa, pecinta tanaman hias.",
+                isLoading = false,
+            ),
+            onBack = {},
+            onNameChange = {},
+            onUsernameChange = {},
+            onBioChange = {},
+            onSave = {},
+            onSignOut = {},
+        )
     }
 }

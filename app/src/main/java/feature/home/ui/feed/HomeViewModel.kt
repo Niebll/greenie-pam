@@ -1,59 +1,95 @@
 package com.example.greeniepam.feature.home.ui.feed
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.greeniepam.core.data.JournalRepository
+import com.example.greeniepam.core.data.UserRepository
+import com.example.greeniepam.core.model.JournalPost
+import com.example.greeniepam.core.util.timeAgo
+import com.example.greeniepam.core.util.toUserMessage
 import com.example.greeniepam.feature.home.data.model.Post
-import com.example.greeniepam.ui.JournalRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.math.abs
+import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val journalRepository: JournalRepository,
+    private val userRepository: UserRepository,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    init {
-        loadPosts()
-    }
+    /** Data mentah dari Supabase; diurutkan ulang sesuai tab. */
+    private var journals: List<JournalPost> = emptyList()
 
     fun selectTab(tab: HomeTab) {
-        _uiState.update { it.copy(selectedTab = tab) }
+        _uiState.update { it.copy(selectedTab = tab, posts = toPosts(journals, tab)) }
     }
 
     fun refreshPosts() {
-        loadPosts()
-    }
-
-    fun toggleLike(postId: Long) {
-        val entry = JournalRepository.journals.find { abs(it.id.hashCode().toLong()) == postId }
-        if (entry != null) {
-            JournalRepository.toggleLike(entry.id)
-            loadPosts()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                journals = journalRepository.getFeed()
+                val name = runCatching { userRepository.getMyProfile().name }.getOrNull()
+                _uiState.update {
+                    it.copy(
+                        userName = name ?: it.userName,
+                        posts = toPosts(journals, it.selectedTab),
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.toUserMessage()) }
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
         }
     }
 
-    private fun loadPosts() {
-        val journalPosts = JournalRepository.journals
-            .filter { it.isSharedToFeed }
-            .map { entry ->
-                Post(
-                    id = abs(entry.id.hashCode().toLong()),
-                    authorName = "Dinda",
-                    timeAgo = entry.date,
-                    plantHeight = "Tinggi ${entry.height}",
-                    leafCondition = entry.condition,
-                    caption = entry.notes.ifBlank { "Perkembangan tanaman ${entry.plantName}." },
-                    likeCount = entry.likesCount,
-                    commentCount = entry.comments.size,
-                    isGold = false,
-                )
-            }
+    fun toggleLike(postId: Long) {
+        val target = journals.find { it.id == postId } ?: return
+        val liked = !target.isLiked
 
-        _uiState.update {
-            it.copy(
-                posts = journalPosts
+        // Update tampilan dulu supaya terasa cepat, lalu kirim ke Supabase
+        applyLike(postId, liked)
+        viewModelScope.launch {
+            try {
+                journalRepository.setLiked(postId, liked)
+            } catch (e: Exception) {
+                applyLike(postId, !liked)
+                _uiState.update { it.copy(error = e.toUserMessage()) }
+            }
+        }
+    }
+
+    private fun applyLike(postId: Long, liked: Boolean) {
+        journals = journals.map {
+            if (it.id != postId) it
+            else it.copy(isLiked = liked, likeCount = (it.likeCount + if (liked) 1 else -1).coerceAtLeast(0))
+        }
+        _uiState.update { it.copy(posts = toPosts(journals, it.selectedTab)) }
+    }
+
+    private fun toPosts(source: List<JournalPost>, tab: HomeTab): List<Post> {
+        val sorted = when (tab) {
+            HomeTab.Populer -> source.sortedByDescending { it.likeCount }
+            HomeTab.Terbaru -> source.sortedByDescending { it.createdAt }
+        }
+        return sorted.map { journal ->
+            Post(
+                id = journal.id,
+                authorName = journal.authorName,
+                timeAgo = timeAgo(journal.createdAt),
+                plantHeight = journal.height.takeIf { it.isNotBlank() }?.let { "Tinggi $it" },
+                leafCondition = journal.condition.takeIf { it.isNotBlank() },
+                caption = journal.notes.ifBlank { "Perkembangan tanaman ${journal.plantName}." },
+                likeCount = journal.likeCount,
+                commentCount = journal.commentCount,
+                isLiked = journal.isLiked,
+                isGold = false,
             )
         }
     }
