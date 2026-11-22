@@ -29,6 +29,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Favorite
@@ -89,6 +91,7 @@ fun DetailPostScreen(
         state = state,
         onBack = onBack,
         onLikeClick = viewModel::toggleLike,
+        onFavoriteClick = viewModel::toggleFavorite,
         onCommentTextChange = viewModel::onCommentTextChange,
         onSendComment = viewModel::sendComment,
     )
@@ -99,6 +102,7 @@ private fun DetailPostContent(
     state: DetailPostUiState,
     onBack: () -> Unit,
     onLikeClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
     onCommentTextChange: (String) -> Unit,
     onSendComment: () -> Unit,
 ) {
@@ -325,6 +329,25 @@ private fun DetailPostContent(
                             color = Color.White,
                         )
                     }
+
+                    Spacer(Modifier.weight(1f))
+
+                    // Favorit (bookmark) — pribadi, beda dengan like
+                    val isFavorited = post?.isFavorited == true
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp) // target sentuh minimal
+                            .clip(CircleShape)
+                            .clickable(onClick = onFavoriteClick),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorited) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                            contentDescription = if (isFavorited) "Hapus dari favorit" else "Simpan ke favorit",
+                            tint = if (isFavorited) GreenieTheme.colors.text.accent else Color.White,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 }
             }
 
@@ -523,6 +546,7 @@ private fun DetailPostScreenPreview() {
             ),
             onBack = {},
             onLikeClick = {},
+            onFavoriteClick = {},
             onCommentTextChange = {},
             onSendComment = {},
         )

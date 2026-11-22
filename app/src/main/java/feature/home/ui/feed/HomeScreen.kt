@@ -46,6 +46,7 @@ fun HomeScreen(
         onLikeClick = { postId ->
             viewModel.toggleLike(postId)
         },
+        onFavoriteClick = viewModel::toggleFavorite,
         modifier = modifier,
     )
 }
@@ -59,6 +60,7 @@ private fun HomeContent(
     onTabSelected: (HomeTab) -> Unit,
     onPostClick: (Long) -> Unit = {},
     onLikeClick: (Long) -> Unit = {},
+    onFavoriteClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -112,6 +114,7 @@ private fun HomeContent(
                 post = post,
                 onClick = { onPostClick(post.id) },
                 onLikeClick = { onLikeClick(post.id) },
+                onFavoriteClick = { onFavoriteClick(post.id) },
                 modifier = Modifier.padding(
                     horizontal = 20.dp,
                 ),

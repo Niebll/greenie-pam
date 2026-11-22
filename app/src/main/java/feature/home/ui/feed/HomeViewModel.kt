@@ -32,15 +32,12 @@ class HomeViewModel(
     fun refreshPosts() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
+            // Nama diambil terpisah supaya sapaan tetap tampil walau feed gagal dimuat
+            runCatching { userRepository.getMyProfile().name }
+                .onSuccess { name -> _uiState.update { it.copy(userName = name) } }
             try {
                 journals = journalRepository.getFeed()
-                val name = runCatching { userRepository.getMyProfile().name }.getOrNull()
-                _uiState.update {
-                    it.copy(
-                        userName = name ?: it.userName,
-                        posts = toPosts(journals, it.selectedTab),
-                    )
-                }
+                _uiState.update { it.copy(posts = toPosts(journals, it.selectedTab)) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.toUserMessage()) }
             } finally {
@@ -63,6 +60,26 @@ class HomeViewModel(
                 _uiState.update { it.copy(error = e.toUserMessage()) }
             }
         }
+    }
+
+    fun toggleFavorite(postId: Long) {
+        val target = journals.find { it.id == postId } ?: return
+        val favorited = !target.isFavorited
+
+        applyFavorite(postId, favorited)
+        viewModelScope.launch {
+            try {
+                journalRepository.setFavorited(postId, favorited)
+            } catch (e: Exception) {
+                applyFavorite(postId, !favorited)
+                _uiState.update { it.copy(error = e.toUserMessage()) }
+            }
+        }
+    }
+
+    private fun applyFavorite(postId: Long, favorited: Boolean) {
+        journals = journals.map { if (it.id == postId) it.copy(isFavorited = favorited) else it }
+        _uiState.update { it.copy(posts = toPosts(journals, it.selectedTab)) }
     }
 
     private fun applyLike(postId: Long, liked: Boolean) {
@@ -89,6 +106,7 @@ class HomeViewModel(
                 likeCount = journal.likeCount,
                 commentCount = journal.commentCount,
                 isLiked = journal.isLiked,
+                isFavorited = journal.isFavorited,
                 isGold = false,
             )
         }

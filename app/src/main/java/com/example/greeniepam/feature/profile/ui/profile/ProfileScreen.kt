@@ -37,6 +37,7 @@ import com.example.greeniepam.core.model.PlantGradientType
 import com.example.greeniepam.core.model.PlantItem
 import com.example.greeniepam.core.theme.GreenieTheme
 import com.example.greeniepam.feature.profile.ui.profile.component.AddPlantDialog
+import com.example.greeniepam.feature.profile.ui.profile.component.JournalPostRow
 import com.example.greeniepam.feature.profile.ui.profile.component.PlantGridCard
 import com.example.greeniepam.feature.profile.ui.profile.component.ProfileBioCard
 import com.example.greeniepam.feature.profile.ui.profile.component.ProfileHeader
@@ -47,6 +48,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     onEditProfileClick: () -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
     onPostClick: (Long) -> Unit = {},
     viewModel: ProfileViewModel = koinViewModel(),
 ) {
@@ -59,6 +61,7 @@ fun ProfileScreen(
         state = state,
         onTabSelected = viewModel::selectTab,
         onEditProfileClick = onEditProfileClick,
+        onFavoritesClick = onFavoritesClick,
         onAddPlantClick = { viewModel.showAddPlantDialog(true) },
         onPostClick = onPostClick,
         modifier = modifier,
@@ -77,6 +80,7 @@ private fun ProfileContent(
     state: ProfileUiState,
     onTabSelected: (ProfileTab) -> Unit,
     onEditProfileClick: () -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
     onAddPlantClick: () -> Unit = {},
     onPostClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -102,6 +106,7 @@ private fun ProfileContent(
                 userName = state.userName,
                 usernameHandle = state.usernameHandle,
                 onEditProfileClick = onEditProfileClick,
+                onFavoritesClick = onFavoritesClick,
             )
         }
 
@@ -170,7 +175,7 @@ private fun ProfileContent(
             }
         } else {
             items(state.sharedPosts, key = { it.id }) { post ->
-                SharedPostRow(
+                JournalPostRow(
                     post = post,
                     onClick = { onPostClick(post.id) },
                     modifier = Modifier.padding(horizontal = GreenieTheme.spacing.screenHorizontal),
@@ -203,42 +208,6 @@ private fun AddPlantCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
         Text(
             text = "Tambah",
             style = GreenieTheme.typography.label12,
-            color = GreenieTheme.colors.text.accent,
-        )
-    }
-}
-
-@Composable
-private fun SharedPostRow(post: JournalPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(GreenieTheme.radius.radius20)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(GreenieTheme.colors.surface.card)
-            .border(1.dp, GreenieTheme.colors.border.subtle, shape)
-            .clickable(onClick = onClick)
-            .padding(GreenieTheme.spacing.space16),
-    ) {
-        Text(
-            text = "${post.plantName} · ${post.journalDate}",
-            style = GreenieTheme.typography.title14,
-            color = GreenieTheme.colors.text.primary,
-        )
-        if (post.notes.isNotBlank()) {
-            Spacer(Modifier.height(GreenieTheme.spacing.space4))
-            Text(
-                text = post.notes,
-                style = GreenieTheme.typography.body13,
-                color = GreenieTheme.colors.text.secondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.height(GreenieTheme.spacing.space8))
-        Text(
-            text = "${post.likeCount} suka · ${post.commentCount} komentar",
-            style = GreenieTheme.typography.body11,
             color = GreenieTheme.colors.text.accent,
         )
     }

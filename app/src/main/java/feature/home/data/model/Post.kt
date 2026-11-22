@@ -14,6 +14,7 @@ data class Post(
     val likeCount: Int = 0,
     val commentCount: Int = 0,
     val isLiked: Boolean = false,
+    val isFavorited: Boolean = false,
     /** true = kartu emas (gold), false = kartu hijau (green) */
     val isGold: Boolean = false,
 )

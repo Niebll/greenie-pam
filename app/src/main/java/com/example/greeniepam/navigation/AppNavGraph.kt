@@ -20,6 +20,7 @@ import com.example.greeniepam.core.theme.greenieCanvas
 import com.example.greeniepam.feature.auth.ui.AuthScreen
 import com.example.greeniepam.feature.detail_post.ui.DetailPostScreen
 import com.example.greeniepam.feature.profile.ui.edit_profile.EditProfileScreen
+import com.example.greeniepam.feature.profile.ui.favorites.FavoritesScreen
 import com.example.greeniepam.ui.DetailScreen
 import com.example.greeniepam.ui.MainScreen
 import org.koin.androidx.compose.koinViewModel
@@ -67,7 +68,16 @@ fun AppNavGraph(
                 },
                 onNavigateToEditProfile = {
                     navController.navigate(Screen.EditProfile)
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(Screen.Favorites)
                 }
+            )
+        }
+        composable<Screen.Favorites> {
+            FavoritesScreen(
+                onBack = { navController.popBackStack() },
+                onPostClick = { postId -> navController.navigate(Screen.DetailPost(postId.toString())) }
             )
         }
         composable<Screen.Detail> { backStackEntry ->
